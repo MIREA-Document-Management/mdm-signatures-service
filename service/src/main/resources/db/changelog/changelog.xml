@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <preConditions>
+        <dbms type="postgresql"/>
+    </preConditions>
+
+    <changeSet id="init-extensions" author="Melekhin Mikhail">
+        <comment>Подключение необходимых расширений</comment>
+        <sql><![CDATA[
+            CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
+        ]]></sql>
+    </changeSet>
+
+    <changeSet id="create-mdm-user-keys-table" author="Melekhin Mikhail">
+        <comment>Создание таблицы mdm_user_keys</comment>
+        <sql><![CDATA[
+            CREATE TABLE IF NOT EXISTS mdm_user_keys
+            (
+                user_login              TEXT NOT NULL PRIMARY KEY,
+                private_key             TEXT NOT NULL,
+                public_key              TEXT NOT NULL,
+                creation_date           timestamp NOT NULL
+            );
+        ]]></sql>
+        <rollback>DROP TABLE mdm_user_keys;</rollback>
+    </changeSet>
+
+    <changeSet id="create-mdm-document-signatures-table" author="Melekhin Mikhail">
+        <comment>Создание таблицы mdm_document_signatures</comment>
+        <sql><![CDATA[
+            CREATE TABLE IF NOT EXISTS mdm_document_signatures
+            (
+                id                      UUID NOT NULL DEFAULT public.uuid_generate_v4() PRIMARY KEY,
+                document_id             UUID NOT NULL,
+                document_version_id     UUID NOT NULL,
+                keys_id                 TEXT NOT NULL REFERENCES mdm_user_keys(user_login),
+                document_hash           TEXT NOT NULL,
+                signature               TEXT NOT NULL,
+                signed_at               timestamp NOT NULL
+            );
+        ]]></sql>
+        <rollback>DROP TABLE mdm_document_signatures;</rollback>
+    </changeSet>
+
+</databaseChangeLog>
